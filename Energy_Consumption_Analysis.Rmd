@@ -1,0 +1,104 @@
+---
+title: "ANLY503HW2"
+output: html_document
+---
+
+```{r}
+library("ggplot2")
+library("RColorBrewer")
+library("plotly")
+Sys.setenv("plotly_username"="juhuang") 
+Sys.setenv("plotly_api_key"="3ulNsW3VBPDO3KzEKYvn")
+```
+
+```{r}
+energy = read.csv("2_Energy_Consumption.csv")
+names(energy) <- c("State", "Natural_gas", "Distillate_fuel_diesel", "Jet_fuel", "Motor_gasoline", "Residual_fuel", "Other", "Total_petroleum", "Ethanol","Electricity","Net_energy","Electrical_system_energy_losses","Total")
+summary(energy)
+```
+
+```{r}
+as.numeric(energy$Natural_gas)
+as.numeric(energy$Distillate_fuel_diesel)
+as.numeric(energy$Jet_fuel)
+as.numeric(energy$Motor_gasoline)
+as.numeric(energy$Residual_fuel)
+as.numeric(energy$Other)
+as.numeric(energy$Total_petroleum)
+as.numeric(energy$Ethanol)
+as.numeric(energy$Electricity)
+as.numeric(energy$Net_energy)
+as.numeric(energy$Electrical_system_energy_losses)
+as.numeric(energy$Total)
+```
+
+```{r}
+mycolors = brewer.pal(5,"YlGnBu")
+#scale_fill_manual(values=mycolors[2:6])
+#scale_fill_discrete(labels = label)
+
+mycolors2 = brewer.pal(9,"YlGnBu")
+#display.brewer.pal(9,"YlGnBu")
+
+```
+
+
+
+```{r}
+type = c("Distillate fuel-diesel(23%)", "Jet fuel(11.6%)", "Motor gasoline(62.4%)", "Residual fuel(2.3%)", "Other(0.8%)")
+nums = c(sum(energy$Distillate_fuel_diesel), sum(energy$Jet_fuel), sum(energy$Motor_gasoline), sum(energy$Residual_fuel), sum(energy$Other))
+df = data.frame(type = type, nums = nums)
+#Bar chart
+p = ggplot(data = df, mapping = aes(x = 'Content', y = nums, fill = type)) + geom_bar(stat = 'identity', position = 'stack', width = 1.5)
+
+label_value = paste(round(df$nums/sum(df$nums) * 100, 1), '%', sep = '')
+#label_value
+label = paste(df$type, label_value, sep = '')
+#label
+png(file = "R petroleum usage.png", width = 800, height = 700, res = 150)
+p + coord_polar(theta = 'y') +labs(x = '', y = '', title = 'The distrubution of petroleum usage in the US') +  geom_text(aes(label = label_value), position = position_stack(vjust = 0.5)) +  theme(axis.text = element_blank()) + theme(axis.ticks = element_blank()) + scale_fill_manual(values=mycolors[1:5])
+
+dev.off()
+```
+
+The motor gasoline is the largest part of petroleum usage in the US, with a percentage of 62.4%, 27 times of the residual fuel.
+
+```{r}
+energy_eth = energy[order(energy$"Ethanol"),]
+type = energy_eth$State
+nums = energy_eth$Ethanol
+df = data.frame(type = type, nums = nums)
+#head(df)
+#bar chart
+png(file = "R Ethabol usage.png", width = 800, height = 1200, res = 150)
+ggplot(data = df, color = mycolors2[1:51], mapping = aes(x = type, y = nums)) + geom_bar(stat='identity') + coord_flip() + theme(legend.position = "none")+labs(x = '', y = '', title = 'The usage of Ethanol in the US') + geom_text(aes(label = nums, front = 5 , vjust = 0.32, hjust = -0.1, color = 1), show.legend = FALSE) + ylim(0,132)
+
+dev.off()
+```
+
+When it comes to ethanol usage, California and Texas are still the two states that consuming the most of the energy. This may because that California and Texas are the two states that cover the largest area among all US states.
+
+
+
+```{r}
+data <- data.frame(energy$State,energy$Distillate_fuel_diesel,energy$Jet_fuel,energy$Motor_gasoline,energy$Residual_fuel,energy$Other)
+names(data) <- c("State", "Distillate_fuel_diesel", "Jet_fuel", "Motor_gasoline", "Residual_fuel", "Other")
+#data
+```
+
+
+```{r}
+p <- plot_ly(data, x = ~State, y = ~Distillate_fuel_diesel, type = "bar", name = "Distillate_fuel_diesel",width = 1200, height =500) %>% 
+  add_trace(y = ~Jet_fuel, name = "Jet_fuel") %>% 
+  add_trace(y = ~Motor_gasoline, name = "Motor_gasoline") %>%
+  add_trace(y = ~Residual_fuel, name = "Residual_fuel") %>%
+  add_trace(y = ~Other, name = "Other") %>%
+  layout(title = 'Different petroleum energy usage of each state in the US',
+         yaxis = list(title = "Petroleum Usage (Trillion Btu)"), 
+         xaxis = list(title = ""),
+         barmode = "stack")
+p
+chart_link = api_create(p, filename="rplotly petroleum")
+chart_link
+```
+
